@@ -1,0 +1,35 @@
+html, body, #root {
+  margin: 0;
+  padding: 0;
+  height: 100%; /* Ensure these elements take full height */
+  overflow: hidden; /* Hide main body scrollbar, use Layout's internal scroll */
+  background: #f5f6fa;
+}
+
+.ant-layout {
+  background: #f5f6fa !important;
+  /* Height will be handled in JSX with minHeight: '100vh' */
+}
+
+.ant-layout-header {
+  background: #fff !important;
+  border-bottom: 1px solid #f0f0f0;
+  box-shadow: 0 2px 8px #f0f1f2;
+}
+
+.ant-layout-sider {
+  background: #fff !important;
+  border-right: 1px solid #f0f0f0;
+  /* Height and overflow will be handled in JSX */
+}
+
+.ant-card {
+  box-shadow: 0 2px 8px #f0f1f2;
+}
+
+.ant-table {
+  background: #fff;
+  border-radius: 12px;
+}
+
+/* Removed old logo/card/read-the-docs styles, they are not needed */
