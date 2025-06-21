@@ -4,6 +4,14 @@ html, body, #root {
   height: 100%; /* Ensure these elements take full height */
   overflow: hidden; /* Hide main body scrollbar, use Layout's internal scroll */
   background: #f5f6fa;
+  font-family: 'Helvetica Neue', Helvetica, Arial, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+}
+
+:root {
+  --main-blue: #3b82f6;
+  --main-blue-light: #eaf3fe;
+  --main-radius: 14px;
+  --main-shadow: 0 2px 12px 0 rgba(59,130,246,0.08);
 }
 
 .ant-layout {
@@ -14,22 +22,125 @@ html, body, #root {
 .ant-layout-header {
   background: #fff !important;
   border-bottom: 1px solid #f0f0f0;
-  box-shadow: 0 2px 8px #f0f1f2;
+  box-shadow: 0 2px 8px #f0f1f2, 0 4px 16px rgba(59,130,246,0.04);
+  z-index: 10;
 }
 
 .ant-layout-sider {
   background: #fff !important;
   border-right: 1px solid #f0f0f0;
-  /* Height and overflow will be handled in JSX */
+  padding-top: 12px;
 }
 
-.ant-card {
-  box-shadow: 0 2px 8px #f0f1f2;
+/* 侧边栏顶部logo区美化 */
+.sider-logo-area {
+  background: linear-gradient(90deg, #eaf3fe 0%, #fff 100%);
+  border-radius: 0 0 var(--main-radius) var(--main-radius);
+  box-shadow: var(--main-shadow);
+  margin: 12px 12px 16px 12px;
+  padding: 0 18px;
+  height: 56px !important;
+  display: flex;
+  align-items: center;
+  margin-bottom: 20px;
 }
 
-.ant-table {
+/* 菜单美化 */
+.ant-menu {
+  background: transparent !important;
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+.ant-menu-item, .ant-menu-submenu-title {
+  border-radius: 18px !important;
+  margin: 0 16px 12px 16px !important;
+  padding: 0 18px !important;
+  height: 48px !important;
+  display: flex;
+  align-items: center;
+  font-family: 'Poppins', 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', Arial, sans-serif;
+  transition: background 0.2s, box-shadow 0.2s, color 0.2s;
+}
+.ant-menu-item .anticon, .ant-menu-submenu-title .anticon {
+  font-size: 22px !important;
+  margin-right: 18px !important;
+}
+.ant-menu-item-selected, .ant-menu-item-active, .ant-menu-submenu-selected {
+  background: linear-gradient(90deg, var(--main-blue-light) 0%, #fff 100%) !important;
+  color: var(--main-blue) !important;
+  font-weight: bold;
+  box-shadow: 0 2px 8px 0 rgba(59,130,246,0.10);
+}
+.ant-menu-item:hover, .ant-menu-submenu-title:hover {
+  background: linear-gradient(90deg, #eaf3fe 0%, #f0f6ff 100%) !important;
+  color: var(--main-blue) !important;
+  box-shadow: 0 2px 8px 0 rgba(59,130,246,0.08);
+}
+.ant-menu-submenu-arrow {
+  color: var(--main-blue) !important;
+}
+
+/* 父菜单展开时高亮 */
+.ant-menu-submenu-open > .ant-menu-submenu-title {
+  background: linear-gradient(90deg, var(--main-blue-light) 0%, #fff 100%) !important;
+  color: var(--main-blue) !important;
+  font-weight: bold;
+  box-shadow: 0 2px 8px 0 rgba(59,130,246,0.10);
+}
+
+/* 卡片、表格圆角阴影 */
+.ant-card, .ant-table {
+  border-radius: var(--main-radius) !important;
+  box-shadow: var(--main-shadow) !important;
+}
+
+/* 按钮美化 */
+.ant-btn {
+  border-radius: 8px !important;
+  box-shadow: 0 1px 4px rgba(59,130,246,0.06);
+  transition: background 0.2s, color 0.2s;
+}
+.ant-btn:hover, .ant-btn:focus {
+  background: var(--main-blue-light) !important;
+  color: var(--main-blue) !important;
+  border-color: var(--main-blue) !important;
+}
+
+/* 主内容区美化 */
+.ant-layout-content {
   background: #fff;
-  border-radius: 12px;
+  border-radius: var(--main-radius);
+  box-shadow: var(--main-shadow);
+  padding: 24px;
+  margin: 24px;
+}
+
+/* 优化字体和间距 */
+.ant-menu-title-content, .ant-btn {
+  font-size: 16px;
+}
+
+.ant-menu-item .anticon {
+  font-size: 18px;
+  margin-right: 8px;
 }
 
 /* Removed old logo/card/read-the-docs styles, they are not needed */
+
+/* 只让仓库管理的二级菜单缩进，不影响一级菜单 */
+.ant-menu-submenu .ant-menu .ant-menu-item[style*='padding-left: 24px'] {
+  padding-left: 30px !important;
+}
+
+/* 一级菜单（不在子菜单里的） */
+.ant-menu > .ant-menu-item > .ant-menu-title-content,
+.ant-menu > .ant-menu-submenu > .ant-menu-submenu-title > .ant-menu-title-content {
+  font-size: 17px !important;
+  font-weight: 800 !important;
+}
+
+/* 二级菜单（在子菜单里的） */
+.ant-menu-submenu .ant-menu .ant-menu-item > .ant-menu-title-content {
+  font-size: 15px !important;
+  font-weight: 500 !important;
+}
