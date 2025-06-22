@@ -43,8 +43,10 @@ function WarehouseArea() {
 
   const onEdit = (record) => {
     setEditing(record);
-    form.setFieldsValue(record);
     setModalOpen(true);
+    setTimeout(() => {
+      form.setFieldsValue(record);
+    }, 0);
   };
 
   const syncToLocalStorage = (newData) => {

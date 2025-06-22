@@ -52,14 +52,10 @@ function WarehouseZone() {
 
   const onEdit = (record) => {
     setEditing(record);
-    form.setFieldsValue({
-      ...record,
-      index: record.index, // 确保数字类型字段正确设置
-      length: record.length,
-      width: record.width,
-      height: record.height
-    });
     setModalOpen(true);
+    setTimeout(() => {
+      form.setFieldsValue(record);
+    }, 0);
   };
 
   const syncToLocalStorage = (newData) => {

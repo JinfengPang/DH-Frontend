@@ -17,14 +17,36 @@ function WarehouseSlot() {
   const [deleteKey, setDeleteKey] = useState(null);
   const [areas, setAreas] = useState([]);
   const [zones, setZones] = useState([]);
+  const [filteredZones, setFilteredZones] = useState([]);
 
   useEffect(() => {
-    // 只在组件加载时获取一次数据
     const areaData = JSON.parse(localStorage.getItem('warehouse_areas') || '[]');
     const zoneData = JSON.parse(localStorage.getItem('warehouse_zones') || '[]');
     setAreas(areaData);
     setZones(zoneData);
   }, []);
+
+  useEffect(() => {
+    if (modalOpen) {
+      if (editing) {
+        form.setFieldsValue(editing);
+        const filtered = zones.filter(zone => zone.area === editing.area);
+        setFilteredZones(filtered);
+      } else {
+        form.resetFields();
+        setFilteredZones([]);
+      }
+    }
+    // eslint-disable-next-line
+  }, [modalOpen, editing, zones, form]);
+
+  const handleAreaChange = (areaName) => {
+    const filtered = zones.filter(zone => zone.area === areaName);
+    setFilteredZones(filtered);
+    if (!editing) {
+      form.setFieldsValue({ zone: undefined });
+    }
+  };
 
   const columns = [
     { title: '库位名称', dataIndex: 'name', key: 'name' },
@@ -48,12 +70,16 @@ function WarehouseSlot() {
   const onAdd = () => {
     setEditing(null);
     form.resetFields();
+    setFilteredZones([]);
     setModalOpen(true);
   };
 
   const onEdit = (record) => {
     setEditing(record);
     form.setFieldsValue(record);
+    // 让库区选项与当前仓位匹配
+    const filtered = zones.filter(zone => zone.area === record.area);
+    setFilteredZones(filtered);
     setModalOpen(true);
   };
 
@@ -118,7 +144,10 @@ function WarehouseSlot() {
       <Modal
         open={modalOpen}
         title={editing ? '修改库位' : '新增库位'}
-        onCancel={() => setModalOpen(false)}
+        onCancel={() => {
+          setModalOpen(false);
+          setFilteredZones([]);
+        }}
         onOk={handleOk}
         okText="确认"
         cancelText="取消"
@@ -137,14 +166,20 @@ function WarehouseSlot() {
               placeholder="请选择仓位"
               showSearch
               optionFilterProp="label"
+              onChange={handleAreaChange}
             />
           </Form.Item>
-          <Form.Item name="zone" label="从属库区" rules={[{ required: true, message: '请选择从属库区' }]}>
+          <Form.Item 
+            name="zone" 
+            label="从属库区" 
+            rules={[{ required: true, message: '请选择从属库区' }]}
+          >
             <Select 
-              options={zones.map(z => ({ label: z.name, value: z.name }))} 
-              placeholder="请选择库区"
+              options={filteredZones.map(z => ({ label: z.name, value: z.name }))} 
+              placeholder={filteredZones.length ? '请选择库区' : '请先选择仓位'}
               showSearch
               optionFilterProp="label"
+              disabled={!filteredZones.length}
             />
           </Form.Item>
         </Form>
