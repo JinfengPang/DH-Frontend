@@ -8,9 +8,12 @@ const initialData = [
 ];
 
 function WarehouseArea() {
-  const [data, setData] = useState(initialData);
+  const [data, setData] = useState(() => {
+    const saved = localStorage.getItem('warehouse_areas');
+    return saved ? JSON.parse(saved) : initialData;
+  });
   const [modalOpen, setModalOpen] = useState(false);
-  const [editing, setEditing] = useState(null); // null: 新增，否则为编辑对象
+  const [editing, setEditing] = useState(null);
   const [form] = Form.useForm();
   const [deleteKey, setDeleteKey] = useState(null);
 
@@ -34,25 +37,15 @@ function WarehouseArea() {
 
   const onAdd = () => {
     setEditing(null);
+    form.resetFields();
     setModalOpen(true);
-    setTimeout(() => {
-      form.resetFields();
-    }, 0);
   };
 
   const onEdit = (record) => {
     setEditing(record);
+    form.setFieldsValue(record);
     setModalOpen(true);
-    setTimeout(() => {
-      form.setFieldsValue(record);
-    }, 0);
   };
-
-  useEffect(() => {
-    if (!modalOpen) {
-      form.resetFields();
-    }
-  }, [modalOpen]);
 
   const syncToLocalStorage = (newData) => {
     localStorage.setItem('warehouse_areas', JSON.stringify(newData));
@@ -60,7 +53,10 @@ function WarehouseArea() {
 
   const handleOk = async () => {
     try {
+      // 先验证表单
       const values = await form.validateFields();
+      
+      // 验证通过后执行更新
       if (editing) {
         const newData = data.map(item => item.key === editing.key ? { ...editing, ...values } : item);
         setData(newData);
@@ -73,11 +69,10 @@ function WarehouseArea() {
         syncToLocalStorage(newData);
         message.success('新增成功');
       }
+      
       setModalOpen(false);
-      setEditing(null);
-      form.resetFields();
-    } catch (e) {
-      message.error('请填写完整且正确的数据');
+    } catch (error) {
+      console.error('验证失败:', error);
     }
   };
 
@@ -113,11 +108,18 @@ function WarehouseArea() {
         onOk={handleOk}
         okText="确认"
         cancelText="取消"
+        destroyOnClose
       >
-        <Form form={form} layout="vertical">
-          <Form.Item name="name" label="仓位名称" rules={[{ required: true, message: '请输入仓位名称' }]}> <Input /> </Form.Item>
-          <Form.Item name="code" label="仓库编号" rules={[{ required: true, message: '请输入仓库编号' }]}> <Input /> </Form.Item>
-          <Form.Item name="address" label="仓库地址" rules={[{ required: true, message: '请输入仓库地址' }]}> <Input /> </Form.Item>
+        <Form form={form} layout="vertical" preserve={false}>
+          <Form.Item name="name" label="仓位名称" rules={[{ required: true, message: '请输入仓位名称' }]}>
+            <Input />
+          </Form.Item>
+          <Form.Item name="code" label="仓库编号" rules={[{ required: true, message: '请输入仓库编号' }]}>
+            <Input />
+          </Form.Item>
+          <Form.Item name="address" label="仓库地址" rules={[{ required: true, message: '请输入仓库地址' }]}>
+            <Input />
+          </Form.Item>
         </Form>
       </Modal>
       <Modal
