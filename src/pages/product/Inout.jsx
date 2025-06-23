@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Table, Button, Space, Modal, Form, Input, message, Select, DatePicker, Tabs, Tag, Descriptions } from 'antd';
 import dayjs from 'dayjs';
+import * as XLSX from 'xlsx';
 import './inout-tabs.css';
 
 const { TabPane } = Tabs;
@@ -257,6 +258,9 @@ function ProductInout() {
   const [form] = Form.useForm();
   const [detailOpen, setDetailOpen] = useState(false);
   const [detailRecord, setDetailRecord] = useState(null);
+  // 批量入库相关
+  const [importModalOpen, setImportModalOpen] = useState(false);
+  const [importing, setImporting] = useState(false);
 
   // 自动同步 localStorage
   useEffect(() => { localStorage.setItem('product_in', JSON.stringify(dataIn)); }, [dataIn]);
@@ -425,6 +429,42 @@ function ProductInout() {
     });
   };
 
+  // 批量入库处理
+  const handleImportExcel = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setImporting(true);
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      const data = evt.target.result;
+      const workbook = XLSX.read(data, { type: 'binary' });
+      const sheetName = workbook.SheetNames[0];
+      const sheet = workbook.Sheets[sheetName];
+      const json = XLSX.utils.sheet_to_json(sheet);
+      // 只取入库必填字段，自动生成key
+      const newItems = json.map((row, idx) => {
+        const item = { key: Date.now() + '_' + idx };
+        inAllFields.forEach(f => {
+          item[f.key] = row[f.label] || '';
+        });
+        return item;
+      });
+      setDataIn([...dataIn, ...newItems]);
+      setImporting(false);
+      setImportModalOpen(false);
+    };
+    reader.readAsBinaryString(file);
+  };
+
+  // 下载Excel模板
+  const handleDownloadTemplate = () => {
+    const headers = inAllFields.map(f => f.label);
+    const ws = XLSX.utils.aoa_to_sheet([headers]);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, '入库模板');
+    XLSX.writeFile(wb, '入库批量导入模板.xlsx');
+  };
+
   return (
     <div>
       <div style={{ fontSize: 22, fontWeight: 700, marginBottom: 20 }}>出入库操作</div>
@@ -469,7 +509,16 @@ function ProductInout() {
             onChange={e => setSearchCustomer(e.target.value)}
           />
           <span style={{ flex: 1 }} />
-          <Button type="primary" onClick={onAdd}>新增{tab === 'in' ? '入库' : '出库'}</Button>
+          {tab === 'in' && (
+            <>
+              <Button type="primary" onClick={onAdd} style={{ marginRight: 8 }}>新增入库</Button>
+              <Button onClick={() => setImportModalOpen(true)} style={{ marginRight: 8 }}>批量入库</Button>
+              <Button onClick={handleDownloadTemplate}>下载模板</Button>
+            </>
+          )}
+          {tab === 'out' && (
+            <Button type="primary" onClick={onAdd}>新增出库</Button>
+          )}
         </div>
         <Table
           columns={getColumns(tab)}
@@ -501,6 +550,19 @@ function ProductInout() {
         width={600}
       >
         {renderDetail()}
+      </Modal>
+      <Modal
+        open={importModalOpen}
+        title="批量入库"
+        onCancel={() => setImportModalOpen(false)}
+        footer={null}
+      >
+        <div style={{ marginBottom: 16 }}>
+          <input type="file" accept=".xlsx,.xls" onChange={handleImportExcel} disabled={importing} />
+        </div>
+        <div style={{ color: '#888', fontSize: 13 }}>
+          请上传Excel文件，表头需与字段名一致（如：入库单号、是否货转、入库日期、是否提供载具、所属仓库、所属库区、所属库位、提单号、货权方、提货方、卷号等）。
+        </div>
       </Modal>
     </div>
   );
