@@ -95,7 +95,10 @@ function Profile() {
       </Card>
       <Card bordered style={{ borderRadius: 12, width: 520 }}>
         <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 16 }}>账号安全</div>
-        <Button type="primary" onClick={() => handleEdit('password')}>修改密码</Button>
+        <div style={{ display: 'flex', gap: 16 }}>
+          <Button type="primary" onClick={() => handleEdit('password')}>修改密码</Button>
+          <Button danger style={{ marginLeft: 8 }} onClick={() => { message.success('已退出登录'); }}>退出登录</Button>
+        </div>
       </Card>
       <Modal
         open={modalOpen}
