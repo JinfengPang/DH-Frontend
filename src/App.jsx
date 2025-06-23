@@ -43,9 +43,6 @@ function App() {
           <Route path="product/stock" element={<ProductStock />} />
           <Route path="product/transfer" element={<ProductTransfer />} />
           <Route path="employee" element={<Employee />} />
-          <Route path="customer" element={<Customer />} />
-          <Route path="cost" element={<Cost />} />
-          <Route path="product" element={<Product />} />
           <Route path="profile" element={<Profile />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
