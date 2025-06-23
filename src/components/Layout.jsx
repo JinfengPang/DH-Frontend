@@ -181,7 +181,7 @@ function MainLayout() {
       </Sider>
       <Layout style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
         <Header style={{ background: '#fff', padding: '0 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
-          <div style={{ fontSize: 28, fontWeight: 700, fontFamily: 'Kaiti, KaiTi, STKaiti, serif' }}>欢迎, 大恒007</div>
+          <div style={{ fontSize: 28, fontWeight: 700, fontFamily: 'Kaiti, KaiTi, STKaiti, serif' }}>欢迎, 陈瑞博</div>
           <Button onClick={() => navigate('/profile')}>查看个人资料</Button>
         </Header>
         <Content style={{ margin: '24px', overflow: 'auto', flex: 1 }}>
