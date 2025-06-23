@@ -36,52 +36,50 @@ function WarehouseArea() {
   ];
 
   const onAdd = () => {
-    setEditing(null);
     form.resetFields();
+    setEditing(null);
     setModalOpen(true);
   };
 
   const onEdit = (record) => {
+    form.setFieldsValue(record);
     setEditing(record);
     setModalOpen(true);
-    setTimeout(() => {
-      form.setFieldsValue(record);
-    }, 0);
   };
 
-  const syncToLocalStorage = (newData) => {
-    localStorage.setItem('warehouse_areas', JSON.stringify(newData));
-  };
+  // 自动同步 data 到 localStorage
+  useEffect(() => {
+    localStorage.setItem('warehouse_areas', JSON.stringify(data));
+  }, [data]);
 
   const handleOk = async () => {
     try {
-      // 先验证表单
       const values = await form.validateFields();
       
-      // 验证通过后执行更新
       if (editing) {
-        const newData = data.map(item => item.key === editing.key ? { ...editing, ...values } : item);
+        const newData = data.map(item => 
+          item.key === editing.key ? { ...editing, ...values } : item
+        );
         setData(newData);
-        syncToLocalStorage(newData);
         message.success('修改成功');
       } else {
         const newItem = { ...values, key: Date.now().toString() };
         const newData = [...data, newItem];
         setData(newData);
-        syncToLocalStorage(newData);
         message.success('新增成功');
       }
       
       setModalOpen(false);
+      form.resetFields(); // 关闭后清空表单
     } catch (error) {
       console.error('验证失败:', error);
+      message.error('请填写完整且正确的数据');
     }
   };
 
   const handleDelete = () => {
     const newData = data.filter(item => item.key !== deleteKey);
     setData(newData);
-    syncToLocalStorage(newData);
     setDeleteKey(null);
     message.success('删除成功');
   };
@@ -112,7 +110,7 @@ function WarehouseArea() {
         cancelText="取消"
         destroyOnClose
       >
-        <Form form={form} layout="vertical" preserve={false}>
+        <Form form={form} layout="vertical">
           <Form.Item name="name" label="仓位名称" rules={[{ required: true, message: '请输入仓位名称' }]}>
             <Input />
           </Form.Item>

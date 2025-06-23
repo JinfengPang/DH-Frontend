@@ -153,7 +153,7 @@ function WarehouseSlot() {
         cancelText="取消"
         destroyOnClose
       >
-        <Form form={form} layout="vertical" preserve={false}>
+        <Form form={form} layout="vertical">
           <Form.Item name="name" label="库位名称" rules={[{ required: true, message: '请输入库位名称' }]}>
             <Input />
           </Form.Item>
