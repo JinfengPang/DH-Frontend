@@ -294,7 +294,7 @@ function ProductInout() {
         render: (_, record) => (
           <Space>
             <Button size="small" type="link" onClick={() => onEdit(record, type)}>修改</Button>
-            <Button size="small" type="link" danger onClick={() => handleDelete(record, type)}>删除</Button>
+            {/* <Button size="small" type="link" danger onClick={() => handleDelete(record, type)}>删除</Button> */}
             <Button size="small" type="link" onClick={() => { setDetailRecord(record); setDetailOpen(true); }}>查看详情</Button>
           </Space>
         ),
@@ -383,11 +383,16 @@ function ProductInout() {
   const renderFormItems = () => {
     const all = tab === 'in' ? inAllFields : outAllFields;
     return all.map(meta => {
-      let input = <Input placeholder={`请输入${meta.label}`} />;
+      // 判断是否需要禁用 owner/picker 字段
+      const isOwnerOrPicker = meta.key === 'owner' || meta.key === 'picker';
+      const isEditing = !!editing;
+      let input;
       if (meta.key === 'isTransfer' || meta.key === 'hasCarrier') {
-        input = <Select options={[{ label: '是', value: '是' }, { label: '否', value: '否' }]} placeholder={`请选择${meta.label}`} />;
+        input = <Select options={[{ label: '是', value: '是' }, { label: '否', value: '否' }]} placeholder={`请选择${meta.label}`} disabled={isOwnerOrPicker && isEditing} />;
       } else if (meta.key === 'inDate' || meta.key === 'outDate') {
-        input = <DatePicker style={{ width: '100%' }} format="YYYY-MM-DD" placeholder={`请选择${meta.label}`}/>;
+        input = <DatePicker style={{ width: '100%' }} format="YYYY-MM-DD" placeholder={`请选择${meta.label}`} disabled={isOwnerOrPicker && isEditing} />;
+      } else {
+        input = <Input placeholder={`请输入${meta.label}`} disabled={isOwnerOrPicker && isEditing} />;
       }
       return (
         <Form.Item
