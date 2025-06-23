@@ -32,33 +32,35 @@ function Contract() {
   const [detailRecord, setDetailRecord] = useState(null);
   const [rateOptions, setRateOptions] = useState([]);
   const [customerOptions, setCustomerOptions] = useState([]);
+  const [filterStart, setFilterStart] = useState(null);
+  const [filterEnd, setFilterEnd] = useState(null);
+  const [searchCustomer, setSearchCustomer] = useState('');
 
   useEffect(() => {
     localStorage.setItem('contracts', JSON.stringify(data));
   }, [data]);
 
-  // 获取费率规则编号下拉
+  // 获取费率规则编号和客户下拉
   useEffect(() => {
     const rates = JSON.parse(localStorage.getItem('cost_rates') || '[]');
     setRateOptions(rates.map(r => ({ label: `${r.rateNo}（${r.rateName}）`, value: r.rateNo })));
-    // 获取客户下拉
+    
     const customers = JSON.parse(localStorage.getItem('customers') || '[]');
     setCustomerOptions(customers.map(c => ({ label: c.name, value: c.name })));
   }, [modalOpen]);
 
-  // 修复1：确保修改时正确回填数据
+  // 修改时回填数据
   useEffect(() => {
     if (modalOpen) {
       if (editing) {
-        // 使用setTimeout确保DOM更新完成后再设置表单值
         setTimeout(() => {
           form.setFieldsValue({
             customerName: editing.customerName,
             rateNo: editing.rateNo,
             contractName: editing.contractName,
             contractId: editing.contractId,
-            startDate: editing.startDate ? dayjs(editing.startDate) : null,
-            endDate: editing.endDate ? dayjs(editing.endDate) : null,
+            startDate: editing.startDate ? dayjs(editing.startDate, 'YYYY-MM-DD') : null,
+            endDate: editing.endDate ? dayjs(editing.endDate, 'YYYY-MM-DD') : null,
             contractType: editing.contractType,
             invoiceRate: editing.invoiceRate,
             inFee: editing.inFee,
@@ -110,32 +112,22 @@ function Contract() {
     setModalOpen(true);
   };
 
-  // 修复2：优化表单验证逻辑
   const handleOk = async () => {
     try {
-      // 先触发表单验证
       await form.validateFields();
-      
-      // 获取表单值
       const values = form.getFieldsValue();
       
-      // 日期格式化
-      const startDate = values.startDate ? values.startDate.format('YYYY-MM-DD') : '';
-      const endDate = values.endDate ? values.endDate.format('YYYY-MM-DD') : '';
-      
-      // 创建/更新合同对象
       const newItem = {
         ...values,
-        startDate,
-        endDate,
-        invoiceRate: values.invoiceRate ? Number(values.invoiceRate) : 0,
-        inFee: values.inFee !== undefined ? Number(values.inFee) : undefined,
-        outFee: values.outFee !== undefined ? Number(values.outFee) : undefined,
-        boxFee: values.boxFee !== undefined ? Number(values.boxFee) : undefined,
+        startDate: values.startDate ? values.startDate.format('YYYY-MM-DD') : '',
+        endDate: values.endDate ? values.endDate.format('YYYY-MM-DD') : '',
+        invoiceRate: Number(values.invoiceRate),
+        inFee: Number(values.inFee),
+        outFee: Number(values.outFee),
+        boxFee: Number(values.boxFee),
         key: editing ? editing.key : Date.now().toString(),
       };
 
-      // 更新数据
       if (editing) {
         setData(data.map(item => item.key === editing.key ? newItem : item));
         message.success('修改成功');
@@ -146,7 +138,6 @@ function Contract() {
       
       setModalOpen(false);
     } catch (error) {
-      console.error('表单验证错误:', error);
       message.error('请检查表单数据是否正确填写');
     }
   };
@@ -172,17 +163,80 @@ function Contract() {
     message.success('删除成功');
   };
 
+  // 修复后的日期筛选逻辑
+  const getFilteredData = () => {
+    return data.filter(item => {
+      try {
+        // 客户名称过滤
+        if (searchCustomer && !(item.customerName || '').includes(searchCustomer)) {
+          return false;
+        }
+        // 检查日期字段
+        if (typeof item.startDate !== 'string' || typeof item.endDate !== 'string') {
+          return false;
+        }
+        // 转换日期并验证
+        const start = dayjs(item.startDate, 'YYYY-MM-DD', true);
+        const end = dayjs(item.endDate, 'YYYY-MM-DD', true);
+        if (!start.isValid() || !end.isValid()) {
+          return false;
+        }
+        // 应用筛选条件
+        let pass = true;
+        if (filterStart && dayjs.isDayjs(filterStart)) {
+          pass = pass && start.isSameOrAfter(filterStart, 'day');
+        }
+        if (filterEnd && dayjs.isDayjs(filterEnd)) {
+          pass = pass && end.isSameOrBefore(filterEnd, 'day');
+        }
+        return pass;
+      } catch (e) {
+        console.error('日期处理错误:', e);
+        return false;
+      }
+    });
+  };
+
   return (
     <div>
       <div style={{ marginBottom: 24, display: 'flex', alignItems: 'center' }}>
         <span style={{ fontSize: 22, fontWeight: 700, color: '#222' }}>系统合同管理</span>
         <Button type="primary" style={{ marginLeft: 'auto', borderRadius: 20 }} onClick={onAdd}>新增</Button>
       </div>
+      
+      {/* 日期筛选区域 */}
+      <div style={{ marginBottom: 16, display: 'flex', gap: 16, alignItems: 'center' }}>
+        <span>客户名称</span>
+        <Input
+          placeholder="按客户名称搜索"
+          allowClear
+          style={{ width: 200 }}
+          value={searchCustomer}
+          onChange={e => setSearchCustomer(e.target.value)}
+        />
+        <span>合同开始时间 ≥</span>
+        <DatePicker
+          value={filterStart}
+          onChange={setFilterStart}
+          allowClear
+          style={{ width: 140 }}
+          placeholder="最早开始日期"
+        />
+        <span>合同结束时间 ≤</span>
+        <DatePicker
+          value={filterEnd}
+          onChange={setFilterEnd}
+          allowClear
+          style={{ width: 140 }}
+          placeholder="最晚结束日期"
+        />
+      </div>
+      
       <Card bordered style={{ borderRadius: 12 }}>
         <div style={{ overflowX: 'auto' }}>
           <Table
             columns={columns}
-            dataSource={data}
+            dataSource={getFilteredData()}
             pagination={false}
             scroll={{ x: 1200 }}
             bordered
@@ -190,6 +244,7 @@ function Contract() {
           />
         </div>
       </Card>
+      
       <Modal
         open={modalOpen}
         title={editing ? '修改合同' : '新增合同'}
@@ -242,6 +297,7 @@ function Contract() {
           </Form.Item>
         </Form>
       </Modal>
+      
       <Modal
         open={!!deleteKey}
         title="确认删除"
@@ -253,6 +309,7 @@ function Contract() {
       >
         <div>确定要删除这条数据吗？</div>
       </Modal>
+      
       <Modal
         open={detailOpen}
         title="详情"
