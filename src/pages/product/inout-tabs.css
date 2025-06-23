@@ -1,0 +1,26 @@
+.inout-tabs-bar {
+  display: flex;
+  gap: 0;
+  margin-bottom: 16px;
+}
+.inout-tab {
+  border-radius: 20px 20px 0 0;
+  background: #f7f7f7;
+  color: #555;
+  border: 1px solid #e0e0e0;
+  font-weight: 500;
+  font-size: 16px;
+  padding: 6px 32px;
+  transition: all 0.2s;
+  box-shadow: none;
+}
+.inout-tab-active {
+  border-radius: 20px 20px 0 0;
+  background: #1677ff;
+  color: #fff;
+  border: 1px solid #1677ff;
+  font-weight: 700;
+  font-size: 17px;
+  padding: 8px 36px;
+  box-shadow: 0 2px 8px #e6f0ff;
+}
