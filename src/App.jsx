@@ -1,6 +1,8 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import MainLayout from './components/Layout';
+import Login from './pages/Login';
+import PrivateRoute from './components/PrivateRoute';
 import Dashboard from './pages/Dashboard';
 import WarehouseArea from './pages/warehouse/Area';
 import WarehouseZone from './pages/warehouse/Zone';
@@ -27,24 +29,28 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<MainLayout />}>
-          <Route index element={<Dashboard />} />
-          <Route path="warehouse/area" element={<WarehouseArea />} />
-          <Route path="warehouse/zone" element={<WarehouseZone />} />
-          <Route path="warehouse/slot" element={<WarehouseSlot />} />
-          <Route path="customer/info" element={<CustomerInfo />} />
-          <Route path="customer/limit" element={<CustomerLimit />} />
-          <Route path="cost/rate" element={<CostRate />} />
-          <Route path="cost/contract" element={<CostContract />} />
-          <Route path="cost/in" element={<CostIn />} />
-          <Route path="cost/out" element={<CostOut />} />
-          <Route path="cost/storage" element={<CostStorage />} />
-          <Route path="product/inout" element={<ProductInout />} />
-          <Route path="product/stock" element={<ProductStock />} />
-          <Route path="product/transfer" element={<ProductTransfer />} />
-          <Route path="employee" element={<Employee />} />
-          <Route path="profile" element={<Profile />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/" element={<PrivateRoute />}>
+          <Route path="/" element={<MainLayout />}>
+            <Route index element={<Navigate to="/dashboard" replace />} />
+            <Route path="dashboard" element={<Dashboard />} />
+            <Route path="warehouse/area" element={<WarehouseArea />} />
+            <Route path="warehouse/zone" element={<WarehouseZone />} />
+            <Route path="warehouse/slot" element={<WarehouseSlot />} />
+            <Route path="customer/info" element={<CustomerInfo />} />
+            <Route path="customer/limit" element={<CustomerLimit />} />
+            <Route path="cost/rate" element={<CostRate />} />
+            <Route path="cost/contract" element={<CostContract />} />
+            <Route path="cost/in" element={<CostIn />} />
+            <Route path="cost/out" element={<CostOut />} />
+            <Route path="cost/storage" element={<CostStorage />} />
+            <Route path="product/inout" element={<ProductInout />} />
+            <Route path="product/stock" element={<ProductStock />} />
+            <Route path="product/transfer" element={<ProductTransfer />} />
+            <Route path="employee" element={<Employee />} />
+            <Route path="profile" element={<Profile />} />
+            <Route path="*" element={<Navigate to="/dashboard" replace />} />
+          </Route>
         </Route>
       </Routes>
     </BrowserRouter>

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Card, Button, Input, Modal, Form, message } from 'antd';
+import { useNavigate } from 'react-router-dom';
 
 const userInfo = {
   name: '张三',
@@ -15,6 +16,7 @@ function Profile() {
   const [form] = Form.useForm();
   const [info, setInfo] = useState(userInfo);
   const [formError, setFormError] = useState({});
+  const navigate = useNavigate();
 
   const handleEdit = (type) => {
     setEditType(type);
@@ -66,6 +68,12 @@ function Profile() {
     return '';
   };
 
+  const handleLogout = () => {
+    localStorage.removeItem('isAuthenticated');
+    message.success('已退出登录');
+    navigate('/login');
+  };
+
   return (
     <div style={{ maxWidth: 480, margin: '0' }}>
       <Card bordered style={{ borderRadius: 12, marginBottom: 32, width: 520 }}>
@@ -97,7 +105,7 @@ function Profile() {
         <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 16 }}>账号安全</div>
         <div style={{ display: 'flex', gap: 16 }}>
           <Button type="primary" onClick={() => handleEdit('password')}>修改密码</Button>
-          <Button danger style={{ marginLeft: 8 }} onClick={() => { message.success('已退出登录'); }}>退出登录</Button>
+          <Button danger style={{ marginLeft: 8 }} onClick={handleLogout}>退出登录</Button>
         </div>
       </Card>
       <Modal
