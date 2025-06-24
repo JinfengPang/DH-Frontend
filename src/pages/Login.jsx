@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Card, Form, Input, Button, message } from 'antd';
+import { Card, Form, Input, Button, message, Modal } from 'antd';
 import { UserOutlined, LockOutlined, MailOutlined } from '@ant-design/icons';
+import logo from '../assets/dh_logo.jpg';
 
 function Login() {
   const [form] = Form.useForm();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [countdown, setCountdown] = useState(0);
+  const [isErrorModalVisible, setIsErrorModalVisible] = useState(false);
 
   useEffect(() => {
     let timer;
@@ -35,15 +37,23 @@ function Login() {
         localStorage.setItem('isAuthenticated', 'true');
         navigate('/dashboard');
       } else {
-        message.error('用户名,密码或验证码错误');
+        setIsErrorModalVisible(true);
       }
-      setLoading(false);
     }, 1000);
+  };
+
+  const handleErrorModalClose = () => {
+    setIsErrorModalVisible(false);
+    setLoading(false);
   };
 
   return (
     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#f0f2f5' }}>
-      <Card title="登录" style={{ width: 400 }}>
+      <Card style={{ width: 400 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 24 }}>
+          <img src={logo} alt="logo" style={{ height: 80, marginRight: 16 }} />
+          <h2 style={{ fontSize: 28, fontWeight: 'bold', margin: 0 }}>大恒国际</h2>
+        </div>
         <Form form={form} onFinish={onFinish}>
           <Form.Item name="username" rules={[{ required: true, message: '请输入用户名!' }]}>
             <Input prefix={<UserOutlined />} placeholder="用户名" />
@@ -68,6 +78,19 @@ function Login() {
           </Form.Item>
         </Form>
       </Card>
+      <Modal
+        title="登录失败"
+        open={isErrorModalVisible}
+        onOk={handleErrorModalClose}
+        onCancel={handleErrorModalClose}
+        footer={[
+          <Button key="ok" type="primary" onClick={handleErrorModalClose}>
+            重试
+          </Button>,
+        ]}
+      >
+        <p>用户名、密码或验证码错误，请重试。</p>
+      </Modal>
     </div>
   );
 }
