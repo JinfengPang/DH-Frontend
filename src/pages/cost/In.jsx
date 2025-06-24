@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Table, Button, Space, Modal, Form, Input, message, Select } from 'antd';
+import { Card, Table, Button, Space, Modal, Form, Input, message, Select, DatePicker } from 'antd';
+import dayjs from 'dayjs';
 
 // 从 Info.jsx 获取客户 mock 数据
 const customerMockData = [
@@ -42,6 +43,7 @@ const initialData = [
     pickupParty: '风途有限公司', // 可以是任意存在的客户
     contractName: '2025合作合同',
     billNo: 'B001',
+    settleMonth: '2025-06', // 结算月份
     totalInFee: 5000,
     inUnitPrice: 10,
     inWeight: 500,
@@ -74,6 +76,7 @@ function CostIn() {
   const [searchBillNo, setSearchBillNo] = useState('');
   const [searchCargoOwner, setSearchCargoOwner] = useState('');
   const [searchContract, setSearchContract] = useState('');
+  const [searchMonth, setSearchMonth] = useState('');
   const [contractOptions, setContractOptions] = useState([]);
   const [customerOptions, setCustomerOptions] = useState([]);
   // 自动同步到 localStorage
@@ -106,6 +109,7 @@ function CostIn() {
     { title: '货权方', dataIndex: 'cargoOwner', key: 'cargoOwner' },
     { title: '提货方', dataIndex: 'pickupParty', key: 'pickupParty' },
     { title: '系统合同名称', dataIndex: 'contractName', key: 'contractName' },
+    { title: '结算月份', dataIndex: 'settleMonth', key: 'settleMonth' },
     { title: '提单号', dataIndex: 'billNo', key: 'billNo' },
     { 
       title: '入库一次性费用合计', 
@@ -135,8 +139,9 @@ function CostIn() {
       const matchCustomer = !searchCargoOwner || 
         (item.cargoOwner || '').toLowerCase().includes(searchCargoOwner.toLowerCase()) ||
         (item.pickupParty || '').toLowerCase().includes(searchCargoOwner.toLowerCase());
-      const matchContract = !searchContract || (item.contractName || '').includes(searchContract);
-      return matchBillNo && matchCustomer && matchContract;
+      const matchContract = !searchContract || (item.contractName || '').toLowerCase().includes(searchContract.toLowerCase());
+      const matchMonth = !searchMonth || item.settleMonth === searchMonth;
+      return matchBillNo && matchCustomer && matchContract && matchMonth;
     });
   };
 
@@ -148,13 +153,19 @@ function CostIn() {
 
   const onEdit = (record) => {
     setEditing(record);
-    form.setFieldsValue(record);
+    form.setFieldsValue({
+      ...record,
+      settleMonth: record.settleMonth ? dayjs(record.settleMonth) : null
+    });
     setModalOpen(true);
   };
 
   const handleOk = async () => {
     try {
       const values = await form.validateFields();
+      
+      // 格式化结算月份
+      const settleMonth = values.settleMonth ? values.settleMonth.format('YYYY-MM') : '';
       
       // 计算各项费用
       const inFee = Number(values.inWeight) * Number(values.inUnitPrice);
@@ -163,6 +174,7 @@ function CostIn() {
       
       const newItem = {
         ...values,
+        settleMonth,
         inFee,
         outFee,
         boxTotalFee,
@@ -235,6 +247,14 @@ function CostIn() {
           style={{ width: 200 }}
           value={searchContract}
           onChange={e => setSearchContract(e.target.value)}
+        />
+        <span>结算月份</span>
+        <DatePicker.MonthPicker
+          placeholder="按月份搜索"
+          allowClear
+          style={{ width: 120 }}
+          value={searchMonth ? dayjs(searchMonth) : null}
+          onChange={date => setSearchMonth(date ? date.format('YYYY-MM') : '')}
         />
       </div>
 
@@ -324,6 +344,12 @@ function CostIn() {
           <Form.Item name="inDetail" label="入库一次性费用明细备注" rules={[{ required: true, message: '请输入备注' }]}>
             <Input.TextArea rows={4} />
           </Form.Item>
+          <Form.Item name="settleMonth" label="结算月份" rules={[{ required: true, message: '请选择结算月份' }]}>
+            <DatePicker.MonthPicker 
+              style={{ width: '100%' }} 
+              placeholder="请选择结算月份"
+            />
+          </Form.Item>
         </Form>
       </Modal>
 
@@ -351,6 +377,7 @@ function CostIn() {
             <div style={{ marginBottom: 8 }}><b>货权方：</b>{detailRecord.cargoOwner}</div>
             <div style={{ marginBottom: 8 }}><b>提货方：</b>{detailRecord.pickupParty}</div>
             <div style={{ marginBottom: 8 }}><b>系统合同名称：</b>{detailRecord.contractName}</div>
+            <div style={{ marginBottom: 8 }}><b>结算月份：</b>{detailRecord.settleMonth}</div>
             <div style={{ marginBottom: 8 }}><b>提单号：</b>{detailRecord.billNo}</div>
             <div style={{ marginBottom: 8 }}><b>入库费单价：</b>{detailRecord.inUnitPrice}元/吨</div>
             <div style={{ marginBottom: 8 }}><b>入库重量：</b>{detailRecord.inWeight}吨</div>
