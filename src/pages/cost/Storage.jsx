@@ -154,6 +154,11 @@ const initialData = [
     paymentPerson: '',
     paymentMethod: '月结单',
     remark: '常温仓库堆存',
+    rateSteps: [
+      { day: 30, price: 10 },
+      { day: 60, price: 8 },
+      { day: 90, price: 6 },
+    ],
   },
 ];
 
@@ -161,12 +166,23 @@ function CostStorage() {
   const [data, setData] = useState(() => {
     const saved = localStorage.getItem('cost_storage');
     const initial = saved && JSON.parse(saved).length > 0 ? JSON.parse(saved) : initialData;
-    // 初始化数据时，计算天数和费用，确保数据完整性
+    
+    const savedRates = localStorage.getItem('cost_rates');
+    const rates = savedRates && JSON.parse(savedRates).length > 0 
+      ? JSON.parse(savedRates) 
+      : rateMockData;
+
+    // 初始化数据时，计算天数和费用，并确保 rateSteps 存在
     return initial.map(item => {
+      let rateSteps = item.rateSteps;
+      if (!rateSteps) { // 如果 rateSteps 缺失，则从费率数据中查找
+        const rate = rates.find(r => r.rateNo === item.rateNo);
+        rateSteps = rate ? rate.steps : [];
+      }
       const settlementMonth = dayjs(item.endDate).format('YYYY-MM');
       const { monthlyDays, totalDays } = calculateDays(item.startDate, item.endDate, settlementMonth);
       const storageFee = calculateStorageFee(item.weight, totalDays, item.unitPrice);
-      return { ...item, monthlyDays, totalDays, storageFee };
+      return { ...item, monthlyDays, totalDays, storageFee, rateSteps };
     });
   });
   const [modalOpen, setModalOpen] = useState(false);
@@ -311,6 +327,9 @@ function CostStorage() {
       const settlementMonthForStorage = values.endDate?.format('YYYY-MM');
       const { monthlyDays, totalDays } = calculateDays(startDate, endDate, settlementMonthForStorage);
       
+      const contract = contractOptions.find(c => c.value === values.contractName);
+      const rateSteps = contract?.rateSteps || [];
+      
       const storageFee = calculateStorageFee(values.weight, totalDays, values.unitPrice);
       
       const newItem = {
@@ -320,6 +339,7 @@ function CostStorage() {
         monthlyDays,
         totalDays,
         storageFee,
+        rateSteps, // 将费率阶梯存入数据
         // contractId 从 values 中获取
         key: editing ? editing.key : Date.now().toString(),
       };
@@ -568,19 +588,40 @@ function CostStorage() {
               <div style={{ marginBottom: 8 }}><b>结存重量：</b>{detailRecord.weight}吨</div>
               <div style={{ marginBottom: 8 }}><b>费率规则名称：</b>{detailRecord.rateRuleName}</div>
               <div style={{ marginBottom: 8 }}><b>费率编号：</b>{detailRecord.rateNo}</div>
+              {detailRecord.rateSteps && detailRecord.rateSteps.length > 0 && (
+                <div style={{ marginTop: 8, paddingTop: 8, borderTop: '1px solid #f0f0f0' }}>
+                  <b>费用计算详情:</b>
+                  {(() => {
+                    const { totalDays, rateSteps, storageFee } = detailRecord;
+                    // rateSteps are pre-sorted when loaded.
+                    let activeStepIndex = rateSteps.findIndex(s => totalDays <= s.day);
+                    if (activeStepIndex === -1 && rateSteps.length > 0) {
+                      // If totalDays exceeds all steps, the last step's pricing is used.
+                      activeStepIndex = rateSteps.length - 1;
+                    }
+
+                    if (activeStepIndex !== -1) {
+                      const activeStep = rateSteps[activeStepIndex];
+                      return (
+                        <div style={{ paddingLeft: 16, marginTop: 4 }}>
+                          <div><b>应用阶梯:</b> 阶梯{activeStepIndex + 1} (天数 ≤ {activeStep.day}，单价: {activeStep.price}元/吨/天)</div>
+                          <div><b>阶梯{activeStepIndex + 1} 堆存天数:</b> {totalDays}天</div>
+                          <div><b>阶梯{activeStepIndex + 1} 堆存费用:</b> {storageFee?.toFixed(2)}元</div>
+                        </div>
+                      );
+                    }
+                    return <div style={{ paddingLeft: 16, marginTop: 4 }}>无适用费率阶梯。</div>;
+                  })()}
+                </div>
+              )}
             </div>
 
             <div style={{ marginBottom: 16 }}>
               <div style={{ marginBottom: 8, fontSize: 16, fontWeight: 'bold' }}>费用信息</div>
-              <div style={{ marginBottom: 8 }}><b>堆存费单价：</b>{detailRecord.unitPrice}元/吨/天</div>
               <div style={{ marginBottom: 8 }}><b>堆存费：</b>{detailRecord.storageFee?.toFixed(2)}元</div>
               <div style={{ marginBottom: 8 }}><b>支付状态：</b>{detailRecord.feesPaid ? '已支付' : '未支付'}</div>
-              {detailRecord.feesPaid && (
-                <>
-                  <div style={{ marginBottom: 8 }}><b>付款人：</b>{detailRecord.paymentPerson}</div>
-                  <div style={{ marginBottom: 8 }}><b>付款方式：</b>{detailRecord.paymentMethod}</div>
-                </>
-              )}
+              <div style={{ marginBottom: 8 }}><b>付款人：</b>{detailRecord.paymentPerson}</div>
+              <div style={{ marginBottom: 8 }}><b>付款方式：</b>{detailRecord.paymentMethod}</div>
               <div style={{ marginBottom: 8 }}><b>备注：</b>{detailRecord.remark}</div>
             </div>
           </div>
