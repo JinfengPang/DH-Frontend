@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, Table, Button, Space, Modal, Form, Input, message, Select, DatePicker, Tabs, Tag, Descriptions } from 'antd';
 import dayjs from 'dayjs';
 import * as XLSX from 'xlsx';
+import QRCode from 'react-qr-code';
 import './inout-tabs.css';
 
 const { TabPane } = Tabs;
@@ -261,6 +262,10 @@ function ProductInout() {
   // 批量入库相关
   const [importModalOpen, setImportModalOpen] = useState(false);
   const [importing, setImporting] = useState(false);
+  // 新增二维码弹窗相关状态
+  const [qrModalOpen, setQrModalOpen] = useState(false);
+  const [qrValue, setQrValue] = useState('');
+  const qrRef = React.useRef();
 
   // 自动同步 localStorage
   useEffect(() => { localStorage.setItem('product_in', JSON.stringify(dataIn)); }, [dataIn]);
@@ -294,12 +299,15 @@ function ProductInout() {
         title: '操作',
         key: 'action',
         fixed: 'right',
-        width: 180,
+        width: 220,
         render: (_, record) => (
           <Space>
             <Button size="small" type="link" onClick={() => onEdit(record, type)}>修改</Button>
             {/* <Button size="small" type="link" danger onClick={() => handleDelete(record, type)}>删除</Button> */}
             <Button size="small" type="link" onClick={() => { setDetailRecord(record); setDetailOpen(true); }}>查看详情</Button>
+            {type === 'in' && (
+              <Button size="small" type="link" onClick={() => handleShowQR(record)}>二维码</Button>
+            )}
           </Space>
         ),
       },
@@ -465,6 +473,51 @@ function ProductInout() {
     XLSX.writeFile(wb, '入库批量导入模板.xlsx');
   };
 
+  // 二维码操作
+  const handleShowQR = (record) => {
+    setQrValue(record.rollNo || '');
+    setQrModalOpen(true);
+  };
+  // 保存二维码图片
+  const handleSaveQR = () => {
+    // 通过svg转canvas再下载
+    const svg = qrRef.current.querySelector('svg');
+    if (!svg) return message.error('二维码生成失败');
+    const serializer = new XMLSerializer();
+    const svgStr = serializer.serializeToString(svg);
+    const canvas = document.createElement('canvas');
+    canvas.width = 400;
+    canvas.height = 400;
+    const ctx = canvas.getContext('2d');
+    const img = new window.Image();
+    img.onload = function () {
+      ctx.clearRect(0, 0, 400, 400);
+      ctx.drawImage(img, 0, 0, 400, 400);
+      const url = canvas.toDataURL('image/png');
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${qrValue}_二维码.png`;
+      a.click();
+    };
+    img.src = 'data:image/svg+xml;base64,' + window.btoa(unescape(encodeURIComponent(svgStr)));
+  };
+
+  // 打印二维码
+  const handlePrintQR = () => {
+    const svg = qrRef.current.querySelector('svg');
+    if (!svg) return message.error('二维码生成失败');
+    const serializer = new XMLSerializer();
+    const svgStr = serializer.serializeToString(svg);
+    const img = new window.Image();
+    img.onload = function () {
+      const win = window.open('');
+      win.document.write(`<img src='${img.src}' style='width:200px;height:200px;display:block;margin:40px auto;'/>`);
+      win.print();
+      win.close();
+    };
+    img.src = 'data:image/svg+xml;base64,' + window.btoa(unescape(encodeURIComponent(svgStr)));
+  };
+
   return (
     <div>
       <div style={{ fontSize: 22, fontWeight: 700, marginBottom: 20 }}>出入库操作</div>
@@ -562,6 +615,21 @@ function ProductInout() {
         </div>
         <div style={{ color: '#888', fontSize: 13 }}>
           请上传Excel文件，表头需与字段名一致（如：入库单号、是否货转、入库日期、是否提供载具、所属仓库、所属库区、所属库位、提单号、货权方、提货方、卷号等）。
+        </div>
+      </Modal>
+      <Modal
+        open={qrModalOpen}
+        title="卷号二维码"
+        onCancel={() => setQrModalOpen(false)}
+        footer={[
+          <Button key="save" onClick={handleSaveQR}>保存</Button>,
+          <Button key="print" type="primary" onClick={handlePrintQR}>打印</Button>,
+        ]}
+        destroyOnClose
+      >
+        <div ref={qrRef} style={{ textAlign: 'center', padding: 24 }}>
+          <QRCode value={qrValue || ''} size={200} />
+          <div style={{ marginTop: 16, fontSize: 16 }}>卷号：{qrValue}</div>
         </div>
       </Modal>
     </div>
