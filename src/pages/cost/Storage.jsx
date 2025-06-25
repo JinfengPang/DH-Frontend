@@ -193,7 +193,8 @@ function CostStorage() {
   const [detailRecord, setDetailRecord] = useState(null);
   const [searchContract, setSearchContract] = useState('');
   const [searchRollNo, setSearchRollNo] = useState('');
-  const [searchCustomer, setSearchCustomer] = useState('');
+  const [searchOwner, setSearchOwner] = useState('');
+  const [searchPicker, setSearchPicker] = useState('');
   const [searchMonth, setSearchMonth] = useState('');
   const [customerOptions, setCustomerOptions] = useState([]);
   const [contractOptions, setContractOptions] = useState([]);
@@ -273,9 +274,8 @@ function CostStorage() {
         (item.contractName || '').toLowerCase().includes(searchContract.toLowerCase());
       const matchRollNo = !searchRollNo || 
         (item.rollNo || '').toLowerCase().includes(searchRollNo.toLowerCase());
-      const matchCustomer = !searchCustomer || 
-        (item.cargoOwner || '').toLowerCase().includes(searchCustomer.toLowerCase()) ||
-        (item.pickupParty || '').toLowerCase().includes(searchCustomer.toLowerCase());
+      const matchOwner = !searchOwner || (item.cargoOwner || '').toLowerCase().includes(searchOwner.toLowerCase());
+      const matchPicker = !searchPicker || (item.pickupParty || '').toLowerCase().includes(searchPicker.toLowerCase());
       
       const itemStartDate = dayjs(item.startDate);
       const itemEndDate = dayjs(item.endDate);
@@ -286,7 +286,7 @@ function CostStorage() {
       const matchMonth = !searchMonth || 
         (!itemEndDate.isBefore(searchMonthStart) && !itemStartDate.isAfter(searchMonthEnd));
 
-      return matchContract && matchRollNo && matchCustomer && matchMonth;
+      return matchContract && matchRollNo && matchOwner && matchPicker && matchMonth;
     });
 
     // 如果按月份搜索，则动态计算当月天数用于显示
@@ -425,13 +425,21 @@ function CostStorage() {
           value={searchRollNo}
           onChange={e => setSearchRollNo(e.target.value)}
         />
-        <span>客户</span>
+        <span>货权方</span>
         <Input
-          placeholder="搜索货权方或提货方"
+          placeholder="按货权方搜索"
           allowClear
-          style={{ width: 200 }}
-          value={searchCustomer}
-          onChange={e => setSearchCustomer(e.target.value)}
+          style={{ width: 160 }}
+          value={searchOwner}
+          onChange={e => setSearchOwner(e.target.value)}
+        />
+        <span>提货方</span>
+        <Input
+          placeholder="按提货方搜索"
+          allowClear
+          style={{ width: 160 }}
+          value={searchPicker}
+          onChange={e => setSearchPicker(e.target.value)}
         />
         <span>结算月份</span>
         <DatePicker.MonthPicker

@@ -5,7 +5,8 @@ import dayjs from 'dayjs';
 const initialData = [
   {
     key: '1',
-    customerName: '厦门建发浆纸集团有限公司',
+    owner: '厦门建发浆纸集团有限公司',
+    picker: '厦门建发浆纸集团有限公司',
     rateNo: 'R001',
     contractName: '2025合作合同',
     contractId: 'C001',
@@ -34,7 +35,8 @@ function Contract() {
   const [customerOptions, setCustomerOptions] = useState([]);
   const [filterStart, setFilterStart] = useState(null);
   const [filterEnd, setFilterEnd] = useState(null);
-  const [searchCustomer, setSearchCustomer] = useState('');
+  const [searchOwner, setSearchOwner] = useState('');
+  const [searchPicker, setSearchPicker] = useState('');
 
   useEffect(() => {
     localStorage.setItem('contracts', JSON.stringify(data));
@@ -55,7 +57,8 @@ function Contract() {
       if (editing) {
         setTimeout(() => {
           form.setFieldsValue({
-            customerName: editing.customerName,
+            owner: editing.owner,
+            picker: editing.picker,
             rateNo: editing.rateNo,
             contractName: editing.contractName,
             contractId: editing.contractId,
@@ -75,7 +78,8 @@ function Contract() {
   }, [modalOpen, editing, form]);
 
   const columns = [
-    { title: '客户名称', dataIndex: 'customerName', key: 'customerName' },
+    { title: '货权方', dataIndex: 'owner', key: 'owner' },
+    { title: '提货方', dataIndex: 'picker', key: 'picker' },
     { title: '堆存费率编号', dataIndex: 'rateNo', key: 'rateNo' },
     { title: '系统合同名称', dataIndex: 'contractName', key: 'contractName' },
     { title: '合同id', dataIndex: 'contractId', key: 'contractId' },
@@ -167,8 +171,11 @@ function Contract() {
   const getFilteredData = () => {
     return data.filter(item => {
       try {
-        // 客户名称过滤
-        if (searchCustomer && !(item.customerName || '').includes(searchCustomer)) {
+        // 货权方和提货方过滤
+        if (searchOwner && !(item.owner || '').toLowerCase().includes(searchOwner.toLowerCase())) {
+          return false;
+        }
+        if (searchPicker && !(item.picker || '').toLowerCase().includes(searchPicker.toLowerCase())) {
           return false;
         }
         // 检查日期字段
@@ -205,14 +212,22 @@ function Contract() {
       </div>
       
       {/* 日期筛选区域 */}
-      <div style={{ marginBottom: 16, display: 'flex', gap: 16, alignItems: 'center' }}>
-        <span>客户名称</span>
+      <div style={{ marginBottom: 16, display: 'flex', gap: 16, alignItems: 'center', flexWrap: 'wrap' }}>
+        <span>货权方</span>
         <Input
-          placeholder="按客户名称搜索"
+          placeholder="按货权方搜索"
           allowClear
           style={{ width: 200 }}
-          value={searchCustomer}
-          onChange={e => setSearchCustomer(e.target.value)}
+          value={searchOwner}
+          onChange={e => setSearchOwner(e.target.value)}
+        />
+        <span>提货方</span>
+        <Input
+          placeholder="按提货方搜索"
+          allowClear
+          style={{ width: 200 }}
+          value={searchPicker}
+          onChange={e => setSearchPicker(e.target.value)}
         />
         <span>合同开始时间 ≥</span>
         <DatePicker
@@ -256,8 +271,11 @@ function Contract() {
         width={800}
       >
         <Form form={form} layout="vertical">
-          <Form.Item name="customerName" label="客户名称" rules={[{ required: true, message: '请选择客户' }]}>
-            <Select options={customerOptions} placeholder="请选择客户" showSearch optionFilterProp="label" />
+          <Form.Item name="owner" label="货权方" rules={[{ required: true, message: '请选择货权方' }]}>
+            <Select options={customerOptions} placeholder="请选择货权方" showSearch optionFilterProp="label" />
+          </Form.Item>
+          <Form.Item name="picker" label="提货方" rules={[{ required: true, message: '请选择提货方' }]}>
+            <Select options={customerOptions} placeholder="请选择提货方" showSearch optionFilterProp="label" />
           </Form.Item>
           <Form.Item name="rateNo" label="堆存费率编号" rules={[{ required: true, message: '请选择费率规则' }]}>
             <Select options={rateOptions} placeholder="请选择费率规则" showSearch optionFilterProp="label" />
@@ -319,7 +337,8 @@ function Contract() {
       >
         {detailRecord && (
           <div>
-            <div style={{ marginBottom: 8 }}><b>客户名称：</b>{detailRecord.customerName}</div>
+            <div style={{ marginBottom: 8 }}><b>货权方：</b>{detailRecord.owner}</div>
+            <div style={{ marginBottom: 8 }}><b>提货方：</b>{detailRecord.picker}</div>
             <div style={{ marginBottom: 8 }}><b>堆存费率编号：</b>{detailRecord.rateNo}</div>
             <div style={{ marginBottom: 8 }}><b>系统合同名称：</b>{detailRecord.contractName}</div>
             <div style={{ marginBottom: 8 }}><b>合同id：</b>{detailRecord.contractId}</div>

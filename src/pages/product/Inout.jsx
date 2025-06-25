@@ -430,7 +430,8 @@ function ProductInout() {
   // 搜索状态
   const [searchBillNo, setSearchBillNo] = useState('');
   const [searchRollNo, setSearchRollNo] = useState('');
-  const [searchCustomer, setSearchCustomer] = useState('');
+  const [searchOwner, setSearchOwner] = useState('');
+  const [searchPicker, setSearchPicker] = useState('');
 
   // 过滤数据
   const getFilteredData = (type) => {
@@ -438,10 +439,9 @@ function ProductInout() {
     return data.filter(item => {
       const billMatch = searchBillNo ? (item.billNo || '').includes(searchBillNo) : true;
       const rollMatch = searchRollNo ? (item.rollNo || '').includes(searchRollNo) : true;
-      const customerMatch = searchCustomer
-        ? ((item.owner && item.owner.includes(searchCustomer)) || (item.picker && item.picker.includes(searchCustomer)))
-        : true;
-      return billMatch && rollMatch && customerMatch;
+      const ownerMatch = searchOwner ? (item.owner || '').toLowerCase().includes(searchOwner.toLowerCase()) : true;
+      const pickerMatch = searchPicker ? (item.picker || '').toLowerCase().includes(searchPicker.toLowerCase()) : true;
+      return billMatch && rollMatch && ownerMatch && pickerMatch;
     });
   };
 
@@ -652,11 +652,18 @@ function ProductInout() {
             onChange={e => setSearchRollNo(e.target.value)}
           />
           <Input
-            placeholder="按客户（货权方/提货方）搜索"
+            placeholder="按货权方搜索"
             allowClear
-            style={{ width: 220 }}
-            value={searchCustomer}
-            onChange={e => setSearchCustomer(e.target.value)}
+            style={{ width: 180 }}
+            value={searchOwner}
+            onChange={e => setSearchOwner(e.target.value)}
+          />
+          <Input
+            placeholder="按提货方搜索"
+            allowClear
+            style={{ width: 180 }}
+            value={searchPicker}
+            onChange={e => setSearchPicker(e.target.value)}
           />
           <span style={{ flex: 1 }} />
           {tab === 'in' && !batchMode && (

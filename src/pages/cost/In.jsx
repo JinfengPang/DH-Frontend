@@ -74,7 +74,8 @@ function CostIn() {
   const [detailOpen, setDetailOpen] = useState(false);
   const [detailRecord, setDetailRecord] = useState(null);
   const [searchBillNo, setSearchBillNo] = useState('');
-  const [searchCargoOwner, setSearchCargoOwner] = useState('');
+  const [searchOwner, setSearchOwner] = useState('');
+  const [searchPicker, setSearchPicker] = useState('');
   const [searchContract, setSearchContract] = useState('');
   const [searchMonth, setSearchMonth] = useState('');
   const [contractOptions, setContractOptions] = useState([]);
@@ -136,12 +137,11 @@ function CostIn() {
   const getFilteredData = () => {
     return data.filter(item => {
       const matchBillNo = !searchBillNo || (item.billNo || '').toLowerCase().includes(searchBillNo.toLowerCase());
-      const matchCustomer = !searchCargoOwner || 
-        (item.cargoOwner || '').toLowerCase().includes(searchCargoOwner.toLowerCase()) ||
-        (item.pickupParty || '').toLowerCase().includes(searchCargoOwner.toLowerCase());
+      const matchOwner = !searchOwner || (item.cargoOwner || '').toLowerCase().includes(searchOwner.toLowerCase());
+      const matchPicker = !searchPicker || (item.pickupParty || '').toLowerCase().includes(searchPicker.toLowerCase());
       const matchContract = !searchContract || (item.contractName || '').toLowerCase().includes(searchContract.toLowerCase());
       const matchMonth = !searchMonth || item.settleMonth === searchMonth;
-      return matchBillNo && matchCustomer && matchContract && matchMonth;
+      return matchBillNo && matchOwner && matchPicker && matchContract && matchMonth;
     });
   };
 
@@ -223,7 +223,7 @@ function CostIn() {
       </div>
 
       {/* 搜索区域 */}
-      <div style={{ marginBottom: 16, display: 'flex', gap: 16, alignItems: 'center' }}>
+      <div style={{ marginBottom: 16, display: 'flex', gap: 16, alignItems: 'center', flexWrap: 'wrap' }}>
         <span>提单号</span>
         <Input
           placeholder="按提单号搜索"
@@ -232,13 +232,21 @@ function CostIn() {
           value={searchBillNo}
           onChange={e => setSearchBillNo(e.target.value)}
         />
-        <span>客户</span>
+        <span>货权方</span>
         <Input
-          placeholder="搜索货权方或提货方"
+          placeholder="按货权方搜索"
           allowClear
           style={{ width: 200 }}
-          value={searchCargoOwner}
-          onChange={e => setSearchCargoOwner(e.target.value)}
+          value={searchOwner}
+          onChange={e => setSearchOwner(e.target.value)}
+        />
+        <span>提货方</span>
+        <Input
+          placeholder="按提货方搜索"
+          allowClear
+          style={{ width: 200 }}
+          value={searchPicker}
+          onChange={e => setSearchPicker(e.target.value)}
         />
         <span>系统合同名称</span>
         <Input
@@ -370,29 +378,29 @@ function CostIn() {
         title="详情"
         onCancel={() => setDetailOpen(false)}
         footer={null}
-        width={600}
       >
         {detailRecord && (
           <div>
-            <div style={{ marginBottom: 8 }}><b>货权方：</b>{detailRecord.cargoOwner}</div>
-            <div style={{ marginBottom: 8 }}><b>提货方：</b>{detailRecord.pickupParty}</div>
-            <div style={{ marginBottom: 8 }}><b>系统合同名称：</b>{detailRecord.contractName}</div>
-            <div style={{ marginBottom: 8 }}><b>结算月份：</b>{detailRecord.settleMonth}</div>
-            <div style={{ marginBottom: 8 }}><b>提单号：</b>{detailRecord.billNo}</div>
-            <div style={{ marginBottom: 8 }}><b>入库费单价：</b>{detailRecord.inUnitPrice}元/吨</div>
-            <div style={{ marginBottom: 8 }}><b>入库重量：</b>{detailRecord.inWeight}吨</div>
-            <div style={{ marginBottom: 8 }}><b>入库费用：</b>{detailRecord.inFee}元</div>
-            <div style={{ marginBottom: 8 }}><b>出库费单价：</b>{detailRecord.outUnitPrice}元/吨</div>
-            <div style={{ marginBottom: 8 }}><b>出库重量：</b>{detailRecord.outWeight}吨</div>
-            <div style={{ marginBottom: 8 }}><b>出库费用：</b>{detailRecord.outFee}元</div>
-            <div style={{ marginBottom: 8 }}><b>掏箱费：</b>{detailRecord.boxUnitPrice}元/箱</div>
-            <div style={{ marginBottom: 8 }}><b>箱数：</b>{detailRecord.boxCount}</div>
-            <div style={{ marginBottom: 8 }}><b>掏箱总费：</b>{detailRecord.boxTotalFee}元</div>
-            <div style={{ marginBottom: 8 }}><b>对掏费：</b>{detailRecord.checkFee}元</div>
-            <div style={{ marginBottom: 8 }}><b>包干费：</b>{detailRecord.packageFee}元</div>
-            <div style={{ marginBottom: 8 }}><b>附加费：</b>{detailRecord.additionalFee}元</div>
-            <div style={{ marginBottom: 8 }}><b>附加费明细：</b>{detailRecord.additionalDetail}</div>
-            <div style={{ marginBottom: 8 }}><b>入库一次性费用明细备注：</b>{detailRecord.inDetail}</div>
+            <p><strong>货权方:</strong> {detailRecord.cargoOwner}</p>
+            <p><strong>提货方:</strong> {detailRecord.pickupParty}</p>
+            <p><strong>系统合同名称:</strong> {detailRecord.contractName}</p>
+            <p><strong>结算月份:</strong> {detailRecord.settleMonth}</p>
+            <p><strong>提单号:</strong> {detailRecord.billNo}</p>
+            <p><strong>入库计费重量:</strong> {detailRecord.inWeight} kg</p>
+            <p><strong>入库单价:</strong> {detailRecord.inUnitPrice} 元/kg</p>
+            <p><strong>入库费用:</strong> {detailRecord.inFee} 元</p>
+            <p><strong>出库计费重量:</strong> {detailRecord.outWeight} kg</p>
+            <p><strong>出库单价:</strong> {detailRecord.outUnitPrice} 元/kg</p>
+            <p><strong>出库费用:</strong> {detailRecord.outFee} 元</p>
+            <p><strong>装箱单价:</strong> {detailRecord.boxUnitPrice} 元/箱</p>
+            <p><strong>装箱数量:</strong> {detailRecord.boxCount} 箱</p>
+            <p><strong>装箱总费用:</strong> {detailRecord.boxTotalFee} 元</p>
+            <p><strong>检验费:</strong> {detailRecord.checkFee} 元</p>
+            <p><strong>打包费:</strong> {detailRecord.packageFee} 元</p>
+            <p><strong>额外费用:</strong> {detailRecord.additionalFee} 元</p>
+            <p><strong>额外费用说明:</strong> {detailRecord.additionalDetail}</p>
+            <p><strong>入库费用说明:</strong> {detailRecord.inDetail}</p>
+            <p><strong>入库一次性费用合计:</strong> {detailRecord.totalInFee} 元</p>
           </div>
         )}
       </Modal>

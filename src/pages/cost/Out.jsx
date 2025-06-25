@@ -112,7 +112,8 @@ function CostOut() {
   const [detailOpen, setDetailOpen] = useState(false);
   const [detailRecord, setDetailRecord] = useState(null);
   const [searchBillNo, setSearchBillNo] = useState('');
-  const [searchCargoOwner, setSearchCargoOwner] = useState('');
+  const [searchOwner, setSearchOwner] = useState('');
+  const [searchPicker, setSearchPicker] = useState('');
   const [searchPlateNumber, setSearchPlateNumber] = useState('');
   const [searchDate, setSearchDate] = useState('');
   const [customerOptions, setCustomerOptions] = useState([]);
@@ -157,14 +158,13 @@ function CostOut() {
   const getFilteredData = () => {
     return data.filter(item => {
       const matchBillNo = !searchBillNo || (item.billNo || '').toLowerCase().includes(searchBillNo.toLowerCase());
-      const matchCustomer = !searchCargoOwner || 
-        (item.cargoOwner || '').toLowerCase().includes(searchCargoOwner.toLowerCase()) ||
-        (item.pickupParty || '').toLowerCase().includes(searchCargoOwner.toLowerCase());
+      const matchOwner = !searchOwner || (item.cargoOwner || '').toLowerCase().includes(searchOwner.toLowerCase());
+      const matchPicker = !searchPicker || (item.pickupParty || '').toLowerCase().includes(searchPicker.toLowerCase());
       const matchPlateNumber = !searchPlateNumber || 
         (item.plateNumber || '').toLowerCase().includes(searchPlateNumber.toLowerCase());
       // 按日期过滤，只看是否在同一天
       const matchDate = !searchDate || dayjs(item.outTime).format('YYYY-MM-DD') === searchDate;
-      return matchBillNo && matchCustomer && matchPlateNumber && matchDate;
+      return matchBillNo && matchOwner && matchPicker && matchPlateNumber && matchDate;
     });
   };
 
@@ -251,13 +251,21 @@ function CostOut() {
           value={searchBillNo}
           onChange={e => setSearchBillNo(e.target.value)}
         />
-        <span>客户</span>
+        <span>货权方</span>
         <Input
-          placeholder="搜索货权方或提货方"
+          placeholder="按货权方搜索"
           allowClear
-          style={{ width: 200 }}
-          value={searchCargoOwner}
-          onChange={e => setSearchCargoOwner(e.target.value)}
+          style={{ width: 160 }}
+          value={searchOwner}
+          onChange={e => setSearchOwner(e.target.value)}
+        />
+        <span>提货方</span>
+        <Input
+          placeholder="按提货方搜索"
+          allowClear
+          style={{ width: 160 }}
+          value={searchPicker}
+          onChange={e => setSearchPicker(e.target.value)}
         />
         <span>车牌号</span>
         <Input
