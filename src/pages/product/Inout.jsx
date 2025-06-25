@@ -3,6 +3,8 @@ import { Card, Table, Button, Space, Modal, Form, Input, message, Select, DatePi
 import dayjs from 'dayjs';
 import * as XLSX from 'xlsx';
 import QRCode from 'react-qr-code';
+import { QRCodeCanvas } from 'qrcode.react';
+import QRCodeLib from 'qrcode';
 import './inout-tabs.css';
 
 const { TabPane } = Tabs;
@@ -267,6 +269,11 @@ function ProductInout() {
   const [qrValue, setQrValue] = useState('');
   const [qrInfo, setQrInfo] = useState({ rollNo: '', billNo: '' });
   const qrRef = React.useRef();
+  // 批量二维码相关状态
+  const [batchMode, setBatchMode] = useState(false); // 批量二维码模式
+  const [selectedRowKeys, setSelectedRowKeys] = useState([]); // 选中key
+  const [selectedRows, setSelectedRows] = useState([]); // 选中数据
+  const [exporting, setExporting] = useState(false);
 
   // 自动同步 localStorage
   useEffect(() => { localStorage.setItem('product_in', JSON.stringify(dataIn)); }, [dataIn]);
@@ -300,13 +307,13 @@ function ProductInout() {
         title: '操作',
         key: 'action',
         fixed: 'right',
-        width: 220,
+        width: batchMode && type === 'in' ? 260 : 220,
         render: (_, record) => (
           <Space>
             <Button size="small" type="link" onClick={() => onEdit(record, type)}>修改</Button>
             {/* <Button size="small" type="link" danger onClick={() => handleDelete(record, type)}>删除</Button> */}
             <Button size="small" type="link" onClick={() => { setDetailRecord(record); setDetailOpen(true); }}>查看详情</Button>
-            {type === 'in' && (
+            {type === 'in' && !batchMode && (
               <Button size="small" type="link" onClick={() => handleShowQR(record)}>二维码</Button>
             )}
           </Space>
@@ -521,6 +528,93 @@ function ProductInout() {
     img.src = 'data:image/svg+xml;base64,' + window.btoa(unescape(encodeURIComponent(svgStr)));
   };
 
+  // 批量二维码导出PDF（二维码整齐有间隔，A4页面适配）
+  const handleBatchExportPDF = async () => {
+    if (selectedRows.length === 0) return message.warning('请先选择要导出的卷号');
+    // 兼容Promise/回调
+    const toDataURLAsync = (text, opts) =>
+      new Promise((resolve, reject) => {
+        QRCodeLib.toDataURL(text, opts, (err, url) => {
+          if (err) reject(err);
+          else resolve(url);
+        });
+      });
+    try {
+      const jsPDF = (await import('jspdf')).default;
+      const pdf = new jsPDF({ unit: 'pt', format: 'a4' });
+      const qrSize = 120, marginX = 40, marginY = 40, gapX = 40, gapY = 40;
+      const perRow = 3, perCol = 4;
+      const perPage = perRow * perCol;
+      let page = 0;
+      for (let i = 0; i < selectedRows.length; i += perPage) {
+        if (page > 0) pdf.addPage();
+        const chunk = selectedRows.slice(i, i + perPage);
+        for (let j = 0; j < chunk.length; j++) {
+          const row = Math.floor(j / perRow);
+          const col = j % perRow;
+          const x = marginX + col * (qrSize + gapX);
+          const y = marginY + row * (qrSize + gapY);
+          let imgData = '';
+          let rollNo = chunk[j].rollNo || '';
+          let billNo = chunk[j].billNo || '';
+          try {
+            const qrContent = rollNo + ';' + billNo;
+            imgData = await toDataURLAsync(qrContent, { width: qrSize, margin: 2 });
+          } catch (e) {
+            imgData = '';
+          }
+          if (imgData) {
+            pdf.addImage(imgData, 'PNG', x, y, qrSize, qrSize);
+            // 添加二维码下方说明文字（分两行，紧凑，避免重叠）
+            const label1 = `RollNo: ${rollNo}`;
+            const label2 = `BillNo: ${billNo}`;
+            pdf.setFontSize(10);
+            const textWidth1 = pdf.getTextWidth(label1);
+            const textWidth2 = pdf.getTextWidth(label2);
+            const textX1 = x + (qrSize - textWidth1) / 2;
+            const textX2 = x + (qrSize - textWidth2) / 2;
+            const textY1 = y + qrSize + 12; // 第一行紧贴二维码下方
+            const textY2 = textY1 + 12;    // 第二行紧贴第一行
+            pdf.text(label1, textX1, textY1);
+            pdf.text(label2, textX2, textY2);
+          }
+        }
+        page++;
+      }
+      pdf.save('批量二维码.pdf');
+    } catch (err) {
+      message.error('导出PDF失败，请检查二维码依赖包或刷新页面重试');
+    }
+  };
+
+  // 表格多选配置
+  const rowSelection = batchMode && tab === 'in' ? {
+    selectedRowKeys,
+    onChange: (keys, rows) => {
+      setSelectedRowKeys(keys);
+      setSelectedRows(rows);
+    },
+    getCheckboxProps: () => ({ disabled: false })
+  } : null;
+
+  // 批量操作按钮区
+  const renderBatchBar = () => (
+    <div style={{ marginBottom: 12, display: 'flex', gap: 8 }}>
+      <Button onClick={() => {
+        const allKeys = getFilteredData('in').map(d => d.key);
+        setSelectedRowKeys(allKeys);
+        setSelectedRows(getFilteredData('in'));
+      }}>全选</Button>
+      <Button onClick={() => {
+        setSelectedRowKeys([]);
+        setSelectedRows([]);
+      }}>全不选</Button>
+      <Button type="primary" onClick={handleBatchExportPDF}>导出PDF</Button>
+      <Button danger onClick={() => { setBatchMode(false); setSelectedRowKeys([]); setSelectedRows([]); }}>退出批量</Button>
+      <span style={{ color: '#888', marginLeft: 12 }}>已选 {selectedRowKeys.length} 条</span>
+    </div>
+  );
+
   return (
     <div>
       <div style={{ fontSize: 22, fontWeight: 700, marginBottom: 20 }}>出入库操作</div>
@@ -565,17 +659,16 @@ function ProductInout() {
             onChange={e => setSearchCustomer(e.target.value)}
           />
           <span style={{ flex: 1 }} />
-          {tab === 'in' && (
+          {tab === 'in' && !batchMode && (
             <>
               <Button type="primary" onClick={onAdd} style={{ marginRight: 8 }}>新增入库</Button>
               <Button onClick={() => setImportModalOpen(true)} style={{ marginRight: 8 }}>批量入库</Button>
-              <Button onClick={handleDownloadTemplate}>下载模板</Button>
+              <Button onClick={handleDownloadTemplate} style={{ marginRight: 8 }}>下载模板</Button>
+              <Button type="dashed" onClick={() => setBatchMode(true)}>批量二维码</Button>
             </>
           )}
-          {tab === 'out' && (
-            <Button type="primary" onClick={onAdd}>新增出库</Button>
-          )}
         </div>
+        {batchMode && tab === 'in' && renderBatchBar()}
         <Table
           columns={getColumns(tab)}
           dataSource={getFilteredData(tab)}
@@ -583,6 +676,7 @@ function ProductInout() {
           pagination={{ pageSize: 8 }}
           scroll={{ x: 1200 }}
           bordered
+          rowSelection={rowSelection}
         />
       </Card>
       <Modal
