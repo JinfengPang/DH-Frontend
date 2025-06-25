@@ -265,6 +265,7 @@ function ProductInout() {
   // 新增二维码弹窗相关状态
   const [qrModalOpen, setQrModalOpen] = useState(false);
   const [qrValue, setQrValue] = useState('');
+  const [qrInfo, setQrInfo] = useState({ rollNo: '', billNo: '' });
   const qrRef = React.useRef();
 
   // 自动同步 localStorage
@@ -475,8 +476,10 @@ function ProductInout() {
 
   // 二维码操作
   const handleShowQR = (record) => {
-    setQrValue(record.rollNo || '');
+    // value为 卷号;提单号
+    setQrValue(`${record.rollNo || ''};${record.billNo || ''}`);
     setQrModalOpen(true);
+    setQrInfo({ rollNo: record.rollNo || '', billNo: record.billNo || '' });
   };
   // 保存二维码图片
   const handleSaveQR = () => {
@@ -629,7 +632,8 @@ function ProductInout() {
       >
         <div ref={qrRef} style={{ textAlign: 'center', padding: 24 }}>
           <QRCode value={qrValue || ''} size={200} />
-          <div style={{ marginTop: 16, fontSize: 16 }}>卷号：{qrValue}</div>
+          <div style={{ marginTop: 16, fontSize: 16 }}>卷号：{qrInfo.rollNo}</div>
+          <div style={{ fontSize: 16 }}>提单号：{qrInfo.billNo}</div>
         </div>
       </Modal>
     </div>
